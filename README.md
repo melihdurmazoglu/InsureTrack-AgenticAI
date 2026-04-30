@@ -44,6 +44,11 @@ Throughout this semester, the following steps will be executed:
 ---
 
 
+
+
+
+
+
 ## Technical Part
 
 ### Architecture
