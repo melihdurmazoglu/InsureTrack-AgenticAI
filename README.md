@@ -4,17 +4,18 @@ An autonomous Agentic AI system for insurance and technology news curation.
 
 
 
-# 1. Team Members
+## 1. Team Members
 Melih Durmazoğlu
 
----
+<br>
 
-# 2. Project Motivation
+
+## 2. Project Motivation
 The insurance industry is undergoing a rapid digital transformation driven by artificial intelligence. Staying updated with the latest trends, sector-specific news, and competitor moves is crucial for maintaining a competitive edge. As an intern in this field, I realized that manually tracking these updates is time-consuming and prone to human error. This project aims to automate this knowledge-gathering process using an intelligent agent that acts like a specialized digital journalist.
 
----
+<br><br>
 
-### 3. The Problem
+## 3. The Problem
  **Field**: _Data Science / Agentic AI applied to Insurance and Corporate Intelligence._
  
 **The Problem**
@@ -26,7 +27,7 @@ The insurance industry is undergoing a rapid digital transformation driven by ar
 ### The Solution: 
 An autonomous agent that can search, filter, and categorize news into four specific pillars: About insurance company, Insurance Sector, Insurance & Tech, and Artificial Intelligence.
 
----
+<br><br>
 
 ## 4. Project Plan & Methodology
 Throughout this semester, the following steps will be executed:
@@ -40,8 +41,8 @@ Throughout this semester, the following steps will be executed:
 **Deployment:** The project will be deployed on **Hugging Face** with a **Streamlit** interface.
 
 
----
----
+<br>
+<br><br><br>
 
 
 
@@ -49,9 +50,10 @@ Throughout this semester, the following steps will be executed:
 
 
 
-## Technical Part
+# TECHNICAL PART
+<br><br>
 
-### Architecture
+## Architecture
 
 Single-agent, tool-augmented ReAct loop
 
@@ -69,9 +71,9 @@ User / Timer → LangGraph ReAct Agent → Tavily Search Tool → Internet (live
                                                     PDF Output
 ```
 
----
+<br><br>
 
-### Frameworks
+## Frameworks
 
 **Agentics:** LangGraph and LangChain are used as the agent framework. The agent doesn't just follow a prompt; it makes decisions and searches within a loop, making it a ReAct Agent.
 
@@ -81,25 +83,25 @@ User / Timer → LangGraph ReAct Agent → Tavily Search Tool → Internet (live
 
 **PDF Engine:** ReportLab was chosen for its full integration with Python and dynamic content management. Since news articles vary in length, this flexibility was considered an advantage.
 
----
+<br><br>
 
-### Data Sources
+## Data Sources
 
 This project does not rely on a static dataset. Instead, the agent dynamically retrieves real-time news through the Tavily Search API, which aggregates results from across the web. To ensure relevance, eight predefined query templates were crafted across two categories: Insurance & Technology, and General Technology. These queries were designed based on domain knowledge of the insurance sector, targeting specific topics such as insurtech investments, AI-driven claims processing, and regulatory developments.
 
----
+<br><br>
 
-### Evaluation Plan
+## Evaluation Plan
 
 At this stage, bulletin quality is checked manually by reviewing whether the news items are relevant and correctly categorized. In the next phase, a second Claude Haiku call will be added to automatically verify each news item checking if it actually fits its assigned category. This removes the need for manual review and makes the evaluation process scalable.
 
----
+<br><br>
 
-### User Interface
+## User Interface
 
 A web-based interface is planned using Streamlit. Users will be able to trigger bulletin generation manually, track its progress in real time, and download previously generated PDF bulletins.
 
----
+<br>
 
 ### Team Responsibilities
 
