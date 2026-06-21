@@ -126,12 +126,19 @@ def font_kaydet():
 # ─────────────────────────────────────────────────────
 
 def haberleri_topla_ve_bulten_olustur():
-    """Haberleri toplar ve bülten metnini üretir."""
+    """
+    Haberleri toplar ve bülten metnini üretir.
+    
+    İki aşamalı otonom süreç:
+    1. Keşif aşaması: Agent bu ayın gündemini kendisi araştırır,
+       hangi konuların öne çıktığına karar verir.
+    2. Derinleştirme aşaması: Agent kendi kararına dayanarak
+       özelleştirilmiş sorgular üretir ve 20 haberi toplar.
+    """
     os.environ["ANTHROPIC_API_KEY"] = ANTHROPIC_API_KEY
     os.environ["TAVILY_API_KEY"]    = TAVILY_API_KEY
 
     print("Ajan baslatiliyor...")
-    # max_tokens 8192'ye çıkarıldı — 20 haber için yeterli alan
     llm = ChatAnthropic(model="claude-haiku-4-5-20251001", temperature=0.3, max_tokens=8192)
     search_tool = TavilySearch(max_results=10)
     agent = create_react_agent(llm, [search_tool])
@@ -143,48 +150,99 @@ def haberleri_topla_ve_bulten_olustur():
     }
     ay_str = f"{ay_adi_tr[bugun.month]} {bugun.year}"
 
-    sorgu = f"""
-Sen bir sigorta ve teknoloji analistisin. Gorev: {ay_str} ayina ait son 30 gunun haberlerini arayarak asagidaki iki kategoride profesyonel bir bulten olusturmak.
+    # ── AŞAMA 1: Keşif — Agent bu ayın gündemini araştırır ──
+    print("Asama 1/2: Gundem kesfi yapiliyor...")
 
-ONEMLI: Her kategoride TAM OLARAK 10 (on) haber olmali. Eksik haber kabul edilmez.
+    kesif_sorgusu = f"""
+Sen bir sigorta ve teknoloji analistisin. Bugun {bugun.strftime('%d.%m.%Y')}.
+
+GOREV: {ay_str} ayinin en onemli gelismelerini kesfetmek.
+
+Asagidaki 4 aramayı yap ve sonuclari analiz et:
+1. "insurance technology news {ay_str}"
+2. "insurtech AI developments {ay_str}"
+3. "artificial intelligence breakthroughs {ay_str}"
+4. "tech industry news {ay_str}"
+
+Aramalari yaptiktan sonra SADECE su formati kullanarak cevap ver, baska hicbir sey yazma:
+
+SIGORTA_KONULAR: [virgülle ayrilmis, bu ay one cikan 3-4 sigorta/insurtech konusu]
+TEKNOLOJI_KONULAR: [virgülle ayrilmis, bu ay one cikan 3-4 teknoloji konusu]
+SIGORTA_SORGULAR: [virgülle ayrilmis, 5 adet ozellesmis arama sorgusu - Ingilizce]
+TEKNOLOJI_SORGULAR: [virgülle ayrilmis, 5 adet ozellesmis arama sorgusu - Ingilizce]
+
+Ornek format:
+SIGORTA_KONULAR: insurtech AI funding, claims automation, cyber insurance growth
+TEKNOLOJI_KONULAR: GPT-5 release, chip shortage, EU AI Act
+SIGORTA_SORGULAR: "insurtech AI investment June 2026", "AI claims processing 2026"
+TEKNOLOJI_SORGULAR: "GPT-5 capabilities 2026", "Nvidia H200 availability 2026"
+"""
+
+    kesif_yaniti = agent.invoke({"messages": [{"role": "user", "content": kesif_sorgusu}]})
+    kesif_metni = kesif_yaniti["messages"][-1].content
+    print("Gundem kesfi tamamlandi.")
+
+    # Keşif metninden sorguları parse et
+    sigorta_sorgular = []
+    teknoloji_sorgular = []
+
+    for satir in kesif_metni.split("\n"):
+        satir = satir.strip()
+        if satir.startswith("SIGORTA_SORGULAR:"):
+            deger = satir.replace("SIGORTA_SORGULAR:", "").strip()
+            sigorta_sorgular = [s.strip().strip('"') for s in deger.split(",") if s.strip()]
+        elif satir.startswith("TEKNOLOJI_SORGULAR:"):
+            deger = satir.replace("TEKNOLOJI_SORGULAR:", "").strip()
+            teknoloji_sorgular = [s.strip().strip('"') for s in deger.split(",") if s.strip()]
+
+    # Fallback: parse başarısız olursa sabit sorgular kullan
+    if not sigorta_sorgular:
+        sigorta_sorgular = [
+            f"insurance technology AI {ay_str}",
+            f"insurtech artificial intelligence {ay_str}",
+            "insurance digitalization innovation 2026",
+            "AI claims processing insurance 2026",
+            "insurtech startup funding 2026",
+        ]
+    if not teknoloji_sorgular:
+        teknoloji_sorgular = [
+            f"new AI model release {ay_str}",
+            f"artificial intelligence news {ay_str}",
+            "tech company announcement 2026",
+            "semiconductor chip AI 2026",
+            "AI regulation 2026",
+        ]
+
+    sigorta_sorgu_listesi = "\n".join(
+        [f'{i+1}. "{s}"' for i, s in enumerate(sigorta_sorgular[:6])]
+    )
+    teknoloji_sorgu_listesi = "\n".join(
+        [f'{i+1}. "{s}"' for i, s in enumerate(teknoloji_sorgular[:6])]
+    )
+
+    # ── AŞAMA 2: Derinleştirme — Agent kendi ürettiği sorgularla haberleri toplar ──
+    print("Asama 2/2: Haberler toplanıyor (4-6 dakika)...")
+
+    sorgu = f"""
+Sen bir sigorta ve teknoloji analistisin. Gorev: {ay_str} ayina ait son 30 gunun haberlerini toplayarak profesyonel bir bulten olusturmak.
+
+Bu ay one cikan konulari kesfettin. Simdi bu konulara odakli haberler toplayacaksin.
+
+ONEMLI: Her kategoride TAM OLARAK 10 (on) haber olmali.
 
 KATEGORI 1: SIGORTA & TEKNOLOJI HABERLERI (10 HABER)
-Hem sigortacilik hem de teknolojiyi ayni anda iceren haberler:
-- Sigorta sirketlerinin yapay zeka uygulamalari
-- Insurtech girisimler ve yatirimlar
-- Sigortaciligin dijitallesme projeleri
-- Hasar tespitinde AI/ML kullanimi
-- Sigorta sektorunde blockchain, IoT, telematics
-- Global sigorta teknoloji trendleri
-
-Bu kategori icin su aramalari yap (en az 5 arama):
-1. "insurance technology AI 2026"
-2. "insurtech artificial intelligence {ay_str}"
-3. "sigorta teknoloji yapay zeka 2026"
-4. "insurance digitalization innovation 2026"
-5. "insurtech startup funding 2026"
-6. "AI claims processing insurance 2026"
+Bu ayi One cikan konular temel alinarak olusturulan sorgular:
+{sigorta_sorgu_listesi}
 
 KATEGORI 2: TEKNOLOJI HABERLERI (10 HABER)
-Sadece genel teknoloji haberleri:
-- Yeni yapay zeka modelleri (GPT, Claude, Gemini vb.)
-- Nvidia, AMD, Intel chip gelismeleri
-- Apple, Google, Microsoft, Meta, Amazon buyuk kararlari
-- Avrupa AI Yasasi, global AI regulasyonu
-- Kuantum bilgisayar gelismeleri
-- Buyuk tech sirketi satin almalari
-
-Bu kategori icin su aramalari yap (en az 5 arama):
-1. "new AI model release {ay_str}"
-2. "artificial intelligence news {ay_str}"
-3. "tech company announcement 2026"
-4. "semiconductor chip AI 2026"
-5. "big tech news June 2026"
-6. "AI regulation 2026"
+Bu ayi one cikan konular temel alinarak olusturulan sorgular:
+{teknoloji_sorgu_listesi}
 
 ---
-ONEMLI FORMAT KURALI: Haberleri ASLA numaralandirma (1. 2. 3. gibi). 
-Her haber BASLIK: ile baslamali, basinda hicbir numara, tire veya madde isareti OLMAMALI.
+ONEMLI FORMAT KURALI: Haberleri ASLA numaralandirma.
+Her haber icin MUTLAKA su formati kullan:
+
+BASLIK: [haberin tam basligi]
 OZET: [2-3 cumle ozet]
 ONEM: [neden onemli oldugu]
 KAYNAK: [kaynak adi]
@@ -196,24 +254,24 @@ Bulteni su yapida olustur:
 
 ## KATEGORI 1: SIGORTA & TEKNOLOJI HABERLERI
 
-[10 haber, yukardaki formatta]
+[10 haber]
 
 ## KATEGORI 2: TEKNOLOJI HABERLERI
 
-[10 haber, yukardaki formatta]
+[10 haber]
 
 ## EDITOR NOTU
 
-[Her iki kategorinin ozet degerlendirmesi, 2-3 paragraf]
+[Bu ayin one cikan trendleri ve her iki kategorinin ozet degerlendirmesi, 2-3 paragraf]
 
 Kritik: Her kategoride tam 10 haber olmali. URL'leri kesinlikle atlama.
 """
 
-    print("Haberler aranıyor, bu 4-6 dakika sürebilir (20 haber)...")
     response = agent.invoke({"messages": [{"role": "user", "content": sorgu}]})
     bulten_metni = response["messages"][-1].content
     print("Bulten icerigi olusturuldu.")
     return bulten_metni
+
 
 
 # ─────────────────────────────────────────────────────
