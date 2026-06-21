@@ -40,37 +40,85 @@ if not ANTHROPIC_API_KEY or not TAVILY_API_KEY:
 # ─────────────────────────────────────────────────────
 
 def font_kaydet():
+    """
+    Türkçe karakter destekli font kaydeder. macOS, Linux ve Windows
+    yollarını sırayla dener. Hiçbir TTF bulunamazsa Reportlab'ın
+    dahili Helvetica fontuna düşer (Türkçe karakterler bozuk görünür
+    ama PDF üretimi KeyError ile ÇÖKMEZ).
+
+    Dönüş: (normal_font_adi, bold_font_adi)
+    """
     font_adaylari = [
+        # Linux (HF Spaces / Docker container'larda genelde bunlar olur)
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+        "/opt/homebrew/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/local/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        # macOS
         "/System/Library/Fonts/Supplemental/Arial.ttf",
         "/Library/Fonts/Arial.ttf",
         "/System/Library/Fonts/Helvetica.ttc",
-        "/opt/homebrew/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/local/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        # Windows
+        r"C:\Windows\Fonts\arial.ttf",
+        r"C:\Windows\Fonts\calibri.ttf",
+        r"C:\Windows\Fonts\segoeui.ttf",
+        r"C:\Windows\Fonts\tahoma.ttf",
     ]
     font_bold_adaylari = [
-        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-        "/Library/Fonts/Arial Bold.ttf",
+        # Linux
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
         "/opt/homebrew/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
         "/usr/local/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        # macOS
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+        "/Library/Fonts/Arial Bold.ttf",
+        # Windows
+        r"C:\Windows\Fonts\arialbd.ttf",
+        r"C:\Windows\Fonts\calibrib.ttf",
+        r"C:\Windows\Fonts\segoeuib.ttf",
+        r"C:\Windows\Fonts\tahomabd.ttf",
     ]
+
+    normal_font = None
     for yol in font_adaylari:
         if os.path.exists(yol):
             try:
                 pdfmetrics.registerFont(TTFont("TurkceFont", yol))
+                normal_font = "TurkceFont"
                 break
             except Exception:
                 continue
+
+    bold_font = None
     for yol in font_bold_adaylari:
         if os.path.exists(yol):
             try:
                 pdfmetrics.registerFont(TTFont("TurkceFont-Bold", yol))
-                return
+                bold_font = "TurkceFont-Bold"
+                break
             except Exception:
                 continue
-    try:
-        pdfmetrics.registerFont(TTFont("TurkceFont-Bold", "Helvetica-Bold"))
-    except Exception:
-        pass
+
+    if normal_font is None:
+        print("⚠️  Türkçe destekli font bulunamadı, Helvetica'ya düşülüyor "
+              "(ş/ğ/ı/ö/ü/ç karakterleri bozuk görünebilir). PDF yine de üretilecek.")
+        normal_font = "Helvetica"
+
+    if bold_font is None:
+        bold_font = "Helvetica-Bold"
+
+    # ReportLab'a bu fontların normal/bold eşleşmesini açıkça bildir.
+    # Bu olmadan "Can't map determine family/bold/italic" hatası alınır.
+    pdfmetrics.registerFontFamily(
+        normal_font,
+        normal=normal_font,
+        bold=bold_font,
+        italic=normal_font,
+        boldItalic=bold_font,
+    )
+
+    return normal_font, bold_font
 
 
 # ─────────────────────────────────────────────────────
@@ -505,10 +553,7 @@ def metni_isle(metin):
 def pdf_olustur(bulten_metni, dosya_yolu, evaluation_sonuc=None):
     """Profesyonel, Türkçe destekli PDF bülten oluşturur."""
 
-    font_kaydet()
-
-    YN = "TurkceFont"
-    YB = "TurkceFont-Bold"
+    YN, YB = font_kaydet()
 
     doc = SimpleDocTemplate(
         dosya_yolu,
