@@ -13,6 +13,8 @@ pinned: false
 An autonomous Agentic AI system that searches, evaluates, and compiles monthly insurance & technology bulletins into professional PDF reports.
 
 🔗 **[Live Demo on Hugging Face Spaces](https://huggingface.co/spaces/melihdurmazoglu/InsureTrack-AgenticAI)**  
+**[Direct App URL] https://melihdurmazoglu-insuretrack-agenticai.hf.space/**
+**[Note:] Please enter with Direct App URL. The app may take 1-2 minutes to start if it has been inactive. Please wait for it to load.**
 📝 **[Project Blog Post on Medium](https://medium.com/@melihdurmazoglu35/insuretrack-autonomous-ai-news-curator-25aeb730a426)**  
 💻 **[GitHub Repository](https://github.com/melihdurmazoglu/InsureTrack-AgenticAI)**
 
