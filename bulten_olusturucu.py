@@ -379,18 +379,14 @@ URL: [tam URL]
 # PDF'E KALİTE RAPORU EKLE
 # ─────────────────────────────────────────────────────
 
-def kalite_raporu_ekle(hikaye, evaluation_sonuc, doc):
+def kalite_raporu_ekle(hikaye, evaluation_sonuc, doc, YN="Helvetica", YB="Helvetica-Bold"):
     """PDF'e Kalite Raporu sayfası ekler."""
-
     LACIVERT  = colors.HexColor("#1A2C5B")
     YESIL     = colors.HexColor("#1A6B3C")
     KIRMIZI   = colors.HexColor("#B91C1C")
     GRI       = colors.HexColor("#F2F4F8")
     KOYU_GRI  = colors.HexColor("#6B7280")
     YAZI      = colors.HexColor("#1C1C1C")
-
-    YN = "TurkceFont"
-    YB = "TurkceFont-Bold"
 
     s_bolum_baslik = ParagraphStyle("BB", fontName=YB, fontSize=15,
                                     textColor=colors.white, alignment=TA_LEFT,
@@ -784,7 +780,7 @@ def pdf_olustur(bulten_metni, dosya_yolu, evaluation_sonuc=None):
     ))
 
     if evaluation_sonuc:
-        kalite_raporu_ekle(hikaye, evaluation_sonuc, doc)
+        kalite_raporu_ekle(hikaye, evaluation_sonuc, doc, YN, YB)
 
     doc.build(hikaye)
     print(f"PDF olusturuldu: {dosya_yolu}")
