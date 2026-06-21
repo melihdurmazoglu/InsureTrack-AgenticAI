@@ -1,3 +1,12 @@
+---
+title: InsureTrack AgenticAI
+emoji: 📰
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_file: app.py
+pinned: false
+---
 
 # InsureTrack-AgenticAI
 An autonomous Agentic AI system for insurance and technology news curation.
