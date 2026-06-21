@@ -8,116 +8,181 @@ app_file: app.py
 pinned: false
 ---
 
-# InsureTrack-AgenticAI
-An autonomous Agentic AI system for insurance and technology news curation.
+# InsureTrack — Autonomous AI News Curator
 
+An autonomous Agentic AI system that searches, evaluates, and compiles monthly insurance & technology bulletins into professional PDF reports.
 
+🔗 **[Live Demo on Hugging Face Spaces](https://huggingface.co/spaces/melihdurmazoglu/InsureTrack-AgenticAI)**  
+📝 **[Project Blog Post on Medium](https://medium.com/@melihdurmazoglu35/insuretrack-autonomous-ai-news-curator-25aeb730a426)**  
+💻 **[GitHub Repository](https://github.com/melihdurmazoglu/InsureTrack-AgenticAI)**
 
-## 1. Team Members
-Melih Durmazoğlu
+---
 
-<br>
+## Team Members
 
+| Name | Role |
+|---|---|
+| Melih Durmazoğlu | Full-stack development, agent architecture, deployment |
 
-## 2. Project Motivation
-The insurance industry is undergoing a rapid digital transformation driven by artificial intelligence. Staying updated with the latest trends, sector-specific news, and competitor moves is crucial for maintaining a competitive edge. As an intern in this field, I realized that manually tracking these updates is time-consuming and prone to human error. This project aims to automate this knowledge-gathering process using an intelligent agent that acts like a specialized digital journalist.
+---
 
-<br><br>
+## Project Motivation
 
-## 3. The Problem
- **Field**: _Data Science / Agentic AI applied to Insurance and Corporate Intelligence._
- 
-**The Problem**
+The insurance industry is undergoing rapid digital transformation driven by artificial intelligence. Staying updated with the latest trends and sector-specific news is crucial for professionals in the field. As an intern in this sector, I realized that manually tracking these updates is time-consuming and error-prone.
 
--**Information Overload:** Thousands of news articles are published daily, making it hard to filter what is relevant to the insurance sector and AI.  
--**Manual Effort**: Compiling monthly technology bulletins requires significant manual research. 
--**Lack of Structure:** Information is scattered across various sources without a unified categorical view.
+This project automates the knowledge-gathering process using an intelligent agent that acts like a specialized digital journalist — autonomously searching, filtering, evaluating, and packaging news into a structured monthly report.
 
-### The Solution: 
-An autonomous agent that can search, filter, and categorize news into four specific pillars: About insurance company, Insurance Sector, Insurance & Tech, and Artificial Intelligence.
+---
 
-<br><br>
+## The Problem
 
-## 4. Project Plan & Methodology
-Throughout this semester, the following steps will be executed:
+**Field:** Data Science / Agentic AI applied to Insurance and Corporate Intelligence.
 
-**Agentic Architecture:** Developing a system with an **autonomous decision loop** where the agent decides which search queries to execute based on the monthly context.
+- **Information Overload:** Thousands of news articles are published daily; filtering what is relevant to the insurance sector requires significant effort.
+- **Manual Effort:** Compiling monthly technology bulletins requires substantial research time.
+- **Lack of Structure:** Information is scattered across sources without a unified categorical view.
 
-**Categorization & Summarization:** Using LLMs to categorize news and generate concise summaries for professional use.
+**The Solution:** An autonomous agent that searches, filters, evaluates, and categorizes news into two pillars: **Insurance & Technology** and **General Technology**, then exports a professional PDF bulletin.
 
-**Evaluation Framework:** Implementing an **LLM-in-the-loop** system to verify if the gathered news matches the specified categories and quality standards.
-
-**Deployment:** The project will be deployed on **Hugging Face** with a **Streamlit** interface.
-
-
-<br>
-<br><br><br>
-
-
-
-
-
-
-
-# TECHNICAL PART
-<br><br>
+---
 
 ## Architecture
 
-Single-agent, tool-augmented ReAct loop
-
-The agent autonomously decides which search queries to execute, evaluates the results, and iterates until sufficient information is gathered.
-
-**Pipeline:**
+Single-agent, tool-augmented ReAct loop with an LLM-in-the-loop evaluation layer.
 
 ```
-User / Timer → LangGraph ReAct Agent → Tavily Search Tool → Internet (live news)
-                                                          ↓
-                                         Claude Haiku (LLM)
-                                                          ↓
-                                    Markdown Parser + ReportLab
-                                                          ↓
-                                                    PDF Output
+User (Streamlit UI)
+        │
+        ▼
+LangGraph ReAct Agent  ──────►  Tavily Search API  ──►  Live Web
+        │
+        ▼
+ Claude Haiku 4.5 (LLM)
+        │
+        ▼
+ Evaluation Agent (Claude Haiku 4.5)
+        │
+        ├── GECTI (score ≥ 7/10) ──► PDF Generation (ReportLab)
+        │
+        └── KALDI (score < 7/10) ──► Re-search → Re-evaluate → PDF
+                                            ▲
+                                  (autonomous retry loop)
+        │
+        ▼
+  Streamlit Interface
+  (progress tracking + PDF download)
 ```
 
-<br><br>
+**Key agentic properties:**
+- The agent autonomously decides which search queries to execute and iterates until sufficient quality is reached
+- A second LLM call (evaluation agent) verifies each news item — this is the "LLM-in-the-loop" component required for agentic systems
+- If items fail evaluation, the agent autonomously re-searches and replaces them (autonomous decision loop)
 
-## Frameworks
+---
 
-**Agentics:** LangGraph and LangChain are used as the agent framework. The agent doesn't just follow a prompt; it makes decisions and searches within a loop, making it a ReAct Agent.
+## Frameworks & Tools
 
-**LLM:** Claude Haiku 4.5 was selected as the primary model due to its speed and cost efficiency, which are important for a monthly automated pipeline. Gemini 1.5 Flash was also tested during early development but was set aside due to inconsistent output formatting.
+| Component | Technology | Reason |
+|---|---|---|
+| Agent Framework | LangGraph + LangChain | ReAct loop, tool use, autonomous iteration |
+| LLM | Claude Haiku 4.5 | Speed and cost efficiency for monthly automation |
+| Search Tool | Tavily Search API | Optimized for AI agents, real-time web results |
+| PDF Engine | ReportLab | Full Python integration, dynamic content, Turkish character support |
+| Web Interface | Streamlit | Rapid deployment, real-time progress tracking |
+| Deployment | Hugging Face Spaces (Docker) | Public accessibility, persistent storage |
+| CI/CD | GitHub Actions | Automatic sync from GitHub → Hugging Face on every push |
 
-**Search Tool:** Tavily Search API was used as the search tool, as it is optimized for AI agents.
-
-**PDF Engine:** ReportLab was chosen for its full integration with Python and dynamic content management. Since news articles vary in length, this flexibility was considered an advantage.
-
-<br><br>
+---
 
 ## Data Sources
 
-This project does not rely on a static dataset. Instead, the agent dynamically retrieves real-time news through the Tavily Search API, which aggregates results from across the web. To ensure relevance, eight predefined query templates were crafted across two categories: Insurance & Technology, and General Technology. These queries were designed based on domain knowledge of the insurance sector, targeting specific topics such as insurtech investments, AI-driven claims processing, and regulatory developments.
+This project does not rely on a static dataset. The agent dynamically retrieves real-time news through the Tavily Search API across two categories:
 
-<br><br>
+**Category 1 — Insurance & Technology (10 news items)**
+Targets insurtech investments, AI-driven claims processing, regulatory developments, and digital transformation in insurance.
 
-## Evaluation Plan
+**Category 2 — General Technology (10 news items)**
+Targets new AI model releases, semiconductor developments, and major tech company announcements.
 
-At this stage, bulletin quality is checked manually by reviewing whether the news items are relevant and correctly categorized. In the next phase, a second Claude Haiku call will be added to automatically verify each news item checking if it actually fits its assigned category. This removes the need for manual review and makes the evaluation process scalable.
+Query templates are crafted based on domain knowledge of the insurance sector and updated monthly with the current date context.
 
-<br><br>
+---
+
+## Evaluation Framework
+
+The system implements a two-stage LLM-in-the-loop evaluation:
+
+**Stage 1 — Initial Evaluation**
+After the agent collects 20 news items, a second Claude Haiku call evaluates each item on four criteria (each 0–10):
+
+| Criterion | Description |
+|---|---|
+| URL Score | Is a valid, complete URL present? |
+| Date Score | Is the article from the last 30 days? |
+| Category Score | Does the article fit its assigned category? |
+| Content Score | Is the title meaningful and relevant? |
+
+**Decision rule:** Average ≥ 7 → **GEÇTİ (PASS)**, Average < 7 → **KALDI (FAIL)**
+
+**Stage 2 — Autonomous Retry**
+Items that fail evaluation trigger an autonomous re-search loop: the agent searches for a replacement article in the same category and re-evaluates. This loop continues until all items pass or no better alternatives are found.
+
+**Sample evaluation result from a real run:**
+
+```
+──────────────────────────────────────────────
+  📋 EVALUATİON SONUCU
+──────────────────────────────────────────────
+  ✅ [9.0/10] Insurtech Insights USA 2026 - AI Takes Center Stage...
+  ✅ [8.8/10] Allstate AI Agent Handles 250K Conversations Monthly...
+  ✅ [9.2/10] Microsoft Build 2026 - MAI Models Announced...
+  ...
+──────────────────────────────────────────────
+  Genel Ortalama : 8.8/10
+  Geçen Haberler : 20
+  Kalan Haberler : 0
+  Genel Karar    : GEÇTİ
+──────────────────────────────────────────────
+```
+
+The evaluation report is embedded directly into the generated PDF as a "Quality Report" section.
+
+---
 
 ## User Interface
 
-A web-based interface is planned using Streamlit. Users will be able to trigger bulletin generation manually, track its progress in real time, and download previously generated PDF bulletins.
+The Streamlit web interface allows users to:
 
-<br>
+- **Trigger bulletin generation manually** with a single button click
+- **Track progress in real time** via an expandable status panel showing each pipeline step
+- **Download the generated PDF** immediately after completion
+- **Browse past bulletins** with one-click download for each previous report
 
-### Team Responsibilities
+The interface is deployed on Hugging Face Spaces via Docker and is publicly accessible.
 
-| Role | Responsibility | Member |
-|---|---|---|
-| Agent Architecture | Designing the ReAct loop, query templates | Melih Durmazoğlu |
-| Prompt Engineering | LLM prompt | Melih Durmazoğlu |
-| Output & Formatting | PDF creation, layout design, Turkish character handling | Melih Durmazoğlu |
-| Scheduler & Deployment | Windows Task Scheduler integration, automation setup | Melih Durmazoğlu |
-| UI Development *(planned)* | Streamlit interface design and integration | Melih Durmazoğlu |
+---
+
+## Deployment & CI/CD
+
+The project is deployed on **Hugging Face Spaces** using a Docker container.
+
+**Automatic sync pipeline:**
+1. Code is pushed to the GitHub repository
+2. A GitHub Actions workflow triggers automatically
+3. The workflow pushes the updated code to the Hugging Face Space
+4. The Space rebuilds and redeploys — zero manual steps required
+
+API keys (Anthropic + Tavily) are stored as **Hugging Face Secrets** and injected at runtime — never hardcoded in the repository.
+
+---
+
+## Team Responsibilities
+
+| Role | Responsibility | Member | Status |
+|---|---|---|---|
+| Agent Architecture | ReAct loop design, query templates | Melih Durmazoğlu | ✅ Complete |
+| Prompt Engineering | LLM prompts for agent + evaluator | Melih Durmazoğlu | ✅ Complete |
+| Evaluation Framework | LLM-in-the-loop quality scoring + retry loop | Melih Durmazoğlu | ✅ Complete |
+| Output & Formatting | PDF creation, layout, Turkish character handling | Melih Durmazoğlu | ✅ Complete |
+| UI Development | Streamlit interface, progress tracking, download | Melih Durmazoğlu | ✅ Complete |
+| Deployment | Docker, Hugging Face Spaces, GitHub Actions CI/CD | Melih Durmazoğlu | ✅ Complete |
