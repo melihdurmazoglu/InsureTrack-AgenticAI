@@ -35,9 +35,9 @@ if not ANTHROPIC_API_KEY or not TAVILY_API_KEY:
     )
 
 
-# ─────────────────────────────────────────────────────
+
 # TÜRKÇE FONT
-# ─────────────────────────────────────────────────────
+
 
 def font_kaydet():
     """
@@ -49,7 +49,7 @@ def font_kaydet():
     Dönüş: (normal_font_adi, bold_font_adi)
     """
     font_adaylari = [
-        # Linux (HF Spaces / Docker container'larda genelde bunlar olur)
+        
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
         "/opt/homebrew/share/fonts/truetype/dejavu/DejaVuSans.ttf",
@@ -58,22 +58,22 @@ def font_kaydet():
         "/System/Library/Fonts/Supplemental/Arial.ttf",
         "/Library/Fonts/Arial.ttf",
         "/System/Library/Fonts/Helvetica.ttc",
-        # Windows
+        
         r"C:\Windows\Fonts\arial.ttf",
         r"C:\Windows\Fonts\calibri.ttf",
         r"C:\Windows\Fonts\segoeui.ttf",
         r"C:\Windows\Fonts\tahoma.ttf",
     ]
     font_bold_adaylari = [
-        # Linux
+        
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
         "/opt/homebrew/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
         "/usr/local/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-        # macOS
+         # macOS
         "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
         "/Library/Fonts/Arial Bold.ttf",
-        # Windows
+     
         r"C:\Windows\Fonts\arialbd.ttf",
         r"C:\Windows\Fonts\calibrib.ttf",
         r"C:\Windows\Fonts\segoeuib.ttf",
@@ -108,8 +108,7 @@ def font_kaydet():
     if bold_font is None:
         bold_font = "Helvetica-Bold"
 
-    # ReportLab'a bu fontların normal/bold eşleşmesini açıkça bildir.
-    # Bu olmadan "Can't map determine family/bold/italic" hatası alınır.
+    
     pdfmetrics.registerFontFamily(
         normal_font,
         normal=normal_font,
@@ -121,9 +120,8 @@ def font_kaydet():
     return normal_font, bold_font
 
 
-# ─────────────────────────────────────────────────────
-# AJAN — HABERLERİ TOPLA (10+10 haber)
-# ─────────────────────────────────────────────────────
+
+# Haberleri Toplama
 
 def haberleri_topla_ve_bulten_olustur():
     """
@@ -150,7 +148,7 @@ def haberleri_topla_ve_bulten_olustur():
     }
     ay_str = f"{ay_adi_tr[bugun.month]} {bugun.year}"
 
-    # ── AŞAMA 1: Keşif — Agent bu ayın gündemini araştırır ──
+    #  Faz 1: Agent bu ayın gündemini araştırırız
     print("Asama 1/2: Gundem kesfi yapiliyor...")
 
     kesif_sorgusu = f"""
@@ -195,7 +193,7 @@ TEKNOLOJI_SORGULAR: "GPT-5 capabilities 2026", "Nvidia H200 availability 2026"
             deger = satir.replace("TEKNOLOJI_SORGULAR:", "").strip()
             teknoloji_sorgular = [s.strip().strip('"') for s in deger.split(",") if s.strip()]
 
-    # Fallback: parse başarısız olursa sabit sorgular kullan
+    # parse başarısız olursa sabit sorgular kullanırız
     if not sigorta_sorgular:
         sigorta_sorgular = [
             f"insurance technology AI {ay_str}",
@@ -220,7 +218,7 @@ TEKNOLOJI_SORGULAR: "GPT-5 capabilities 2026", "Nvidia H200 availability 2026"
         [f'{i+1}. "{s}"' for i, s in enumerate(teknoloji_sorgular[:6])]
     )
 
-    # ── AŞAMA 2: Derinleştirme — Agent kendi ürettiği sorgularla haberleri toplar ──
+    # Faz 2: Agent kendi ürettiği sorgularla haberleri toplar 
     print("Asama 2/2: Haberler toplanıyor (4-6 dakika)...")
 
     sorgu = f"""
@@ -274,9 +272,9 @@ Kritik: Her kategoride tam 10 haber olmali. URL'leri kesinlikle atlama.
 
 
 
-# ─────────────────────────────────────────────────────
-# EVALUATION — sadece başlıkları gönder (token tasarrufu)
-# ─────────────────────────────────────────────────────
+
+# Faz 3 : Değerlendirme
+
 
 def bulten_ozetle(bulten_metni: str) -> str:
     """
@@ -301,7 +299,7 @@ def evaluation_yap(bulten_metni: str) -> dict:
 
     client = Anthropic()
 
-    # Sadece özeti gönder — token limitine takılmaz
+    
     ozet = bulten_ozetle(bulten_metni)
 
     sistem_prompt = """Sen bir haber kalite değerlendirme uzmanısın.
@@ -381,9 +379,9 @@ SADECE şu JSON formatını döndür, başka hiçbir şey yazma:
     return sonuc
 
 
-# ─────────────────────────────────────────────────────
+
 # YENİLEME — KALAN HABERLERİ TEKRAR ARA
-# ─────────────────────────────────────────────────────
+
 
 def haberler_yenile(bulten_metni: str, evaluation_sonuc: dict) -> str:
     """Evaluation'da KALDI denen haberleri yeniler."""
@@ -433,9 +431,8 @@ URL: [tam URL]
     return bulten_metni + ek
 
 
-# ─────────────────────────────────────────────────────
-# PDF'E KALİTE RAPORU EKLE
-# ─────────────────────────────────────────────────────
+
+# PDF'E kalite raporu ekleme
 
 def kalite_raporu_ekle(hikaye, evaluation_sonuc, doc, YN="Helvetica", YB="Helvetica-Bold"):
     """PDF'e Kalite Raporu sayfası ekler."""
@@ -554,9 +551,8 @@ def kalite_raporu_ekle(hikaye, evaluation_sonuc, doc, YN="Helvetica", YB="Helvet
     ))
 
 
-# ─────────────────────────────────────────────────────
+
 # PDF OLUŞTUR
-# ─────────────────────────────────────────────────────
 
 def turkce_temizle(metin):
     metin = metin.replace("&", "&amp;")
@@ -715,7 +711,7 @@ def pdf_olustur(bulten_metni, dosya_yolu, evaluation_sonuc=None):
 
     for tur, icerik in bolumler:
 
-        # Yeni haber başlığı gelince öncekini kapat
+        
         if tur == "haber_baslik":
             haber_bloku_bitir()
             aktif_haber = True
@@ -825,7 +821,7 @@ def pdf_olustur(bulten_metni, dosya_yolu, evaluation_sonuc=None):
                     hikaye.append(Paragraph(icerik_temiz, s_paragraf))
             continue
 
-    # Son haberi kapat
+    
     haber_bloku_bitir()
 
     hikaye.append(Spacer(1, 0.8*cm))
@@ -844,9 +840,8 @@ def pdf_olustur(bulten_metni, dosya_yolu, evaluation_sonuc=None):
     print(f"PDF olusturuldu: {dosya_yolu}")
 
 
-# ─────────────────────────────────────────────────────
+
 # ANA AKIŞ
-# ─────────────────────────────────────────────────────
 
 def main():
     print("=" * 55)
@@ -861,10 +856,10 @@ def main():
     dosya_yolu = os.path.join(CIKTI_KLASORU, dosya_adi)
 
     try:
-        # 1. Haberleri topla (10+10)
+        # 1. Haberleri topla
         bulten_metni = haberleri_topla_ve_bulten_olustur()
 
-        # 2. Evaluation yap (özet üzerinden)
+        # 2. Evaluation yap
         evaluation_sonuc = evaluation_yap(bulten_metni)
 
         # 3. Kalan haberler varsa yenile ve tekrar değerlendir
